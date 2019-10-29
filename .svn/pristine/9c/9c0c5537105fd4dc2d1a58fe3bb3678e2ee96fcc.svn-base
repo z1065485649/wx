@@ -1,0 +1,132 @@
+<style lang="less" scoped>
+    .sidemenu{
+        width: 100%;
+        height: 100%;
+        float: left;
+    }
+    .layout-logo{
+        width: 100px;
+        height: 30px;
+        background: #5b6270;
+        border-radius: 3px;
+        float: left;
+        position: relative;
+        top: 15px;
+        left: 20px;
+    }
+    .layout-nav{
+        width: 420px;
+        margin: 0 auto;
+    }
+    .layout-assistant{
+        width: 300px;
+        margin: 0 auto;
+        height: inherit;
+    }
+    .layout-breadcrumb{
+        padding: 10px 15px 0;
+    }
+    .layout-content{
+        min-height: 200px;
+        margin: 15px;
+        overflow: hidden;
+        background: #fff;
+        border-radius: 4px;
+    }
+    .layout-content-main{
+        padding: 10px;
+    }
+    .layout-copy{
+        text-align: center;
+        padding: 10px 0 20px;
+        color: #9ea7b4;
+    }
+</style>
+
+<template>
+    <div class="sidemenu">
+        <!-- <ul v-if="module">
+             <li v-for="(it,index) in module.children" :key="it.url">
+                 <a href="javascript:" :class="[it.url==current.url?'active':'']" @click="onClickMenu(it)">
+                     <Icon :type="it.iconCode"></Icon>
+                     {{it.name}}
+                 </a>
+             </li>
+         </ul>-->
+        <Menu active-name="1-" width="auto" :open-names="['1']" @on-select="onClickMenu">
+            <Submenu :name="index" v-for="(it,index) in submenu" :key="it.id">
+                <template slot="title">
+                    <Icon :type="!it.iconCode?it.iconCode:'ios-navigate'"></Icon>
+                    {{it.name}}
+                </template>
+                <MenuItem :name="x.url" v-for="(x,idx) in it.children" :key="x.id" >
+                    {{x.name}}
+                </MenuItem>
+            </Submenu>
+        </Menu>
+        <span>&nbsp;</span>
+    </div>
+</template>
+
+
+<script>
+
+    import bus from '@/libs/bus'
+
+    let $menus = [];
+
+    export default {
+        name: 'SideMenu',
+        data: function () {
+            return {
+                submenu:[],
+                module: null,
+                current: null
+            }
+        },
+        created: function () {
+            $menus = this.getMenusData();
+            this.autoDetectModuleItems();
+        },
+
+        watch: {
+            '$route': function () {
+                this.autoDetectModuleItems();
+            }
+        },
+
+        methods: {
+            onClickMenu(url) {
+                this.$router.push(url);
+            },
+            autoDetectModuleItems() {
+                this.submenu=$menus;
+                this.module = this.getCurrentMatchItem($menus);
+                if (this.module) {
+                    this.current = this.getCurrentMatchItem(this.module.children);
+                }
+            },
+
+            getMenusData() {
+                let value = localStorage.getItem("menus");
+                if (!value) return [];
+
+                return JSON.parse(value);
+            },
+
+            getCurrentMatchItem(items) {
+                for (let idx = 0; idx < this.$route.matched.length; idx++) {
+                    let route = this.$route.matched[idx];
+                    for (let jdx = 0; jdx < items.length; jdx++) {
+                        let item = items[jdx];
+                        if (item.url == route.path) {
+                            return item;
+                        }
+                    }
+                }
+                return null;
+            },
+        }
+    }
+
+</script>

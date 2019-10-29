@@ -1,0 +1,102 @@
+<!-- -->
+<style lang="less" scoped>
+    @import "../../node_modules/font-awesome/css/font-awesome.css";
+    @import "../../node_modules/summernote/dist/summernote.css";
+    @import "../../node_modules/bootstrap/dist/css/bootstrap.css";
+    .content {
+
+    }
+</style>
+
+<template>
+    <div class="content">
+        <div id="summernote"></div>
+    </div>
+</template>
+<script>
+    import edit from "@/libs/edit"
+    import util from '@/libs/util'
+    import backup from '@/libs/backup'
+    export default{
+        name: '',
+        props: {},
+        data: function () {
+            return {}
+        },
+        created: function () {
+            //edit.loadjscssfile();
+        },
+        methods: {
+            sendFile(files) {
+                var dfd = this.ajaxUploadParam("editor");
+                dfd.then(function (obj) { //成功获取上传文件参数 再 加载 文件上传组件
+                    for (var i = 0; i < files.length; i++) {
+                        var data = new FormData();
+                        data.append("file", files[i]);
+                        data.append("policy", obj.policy);
+                        data.append("Signature", obj.Signature);
+                        $.ajax({
+                            data: data,
+                            type: "POST",
+                            url: obj.url,
+                            cache: false,
+                            contentType: false,
+                            processData: false,
+                            success: function (res) {
+                                if (res) {
+                                    var result = eval("(" + res + ")");
+                                    $("#summernote").summernote('insertImage', result.data.location + result.data.filepath, 'image name'); // the insertImage API
+                                } else {
+                                    alert("上传图片失败！");
+                                }
+                            },
+                            error: function () {
+                                alert("上传图片失败！");
+                            }
+                        });
+                    }
+                });
+            },
+        }
+        ,
+        mounted(){
+            var _this = this;
+            $('#summernote').summernote({
+                height: 200, // set editor height
+                minHeight: null, // set minimum height of editor
+                maxHeight: null, // set maximum height of editor
+                focus: false,
+                lang: 'zh-CN',
+                toolbar: [
+                    ['style', ['bold', 'italic', 'underline', 'clear']],
+                    ['font', ['strikethrough']],
+                    ['fontsize', ['fontsize']],
+                    ['color', ['color']],
+                    ['para', ['ul', 'ol', 'paragraph']],
+                    ['height', ['height']],
+                    ['fullscreen', ['fullscreen']],
+                    ['picture', ['picture']],
+                    ['link', ['link']],
+                    ['codeview', ['codeview']]
+                ],
+                callbacks: {
+                    onImageUpload: function (files) {
+                        _this.sendFile(files);
+                    }
+                }
+            });
+            $(".note-editable").on('blur',function(){
+                setTimeout(function(){
+                    $(".note-popover").hide();
+                },500)
+            });
+        } ,
+        computed: {},
+        components: {}
+        ,
+        destroyed: function () {
+            //edit.removejscssfile("#bootstrapcss");
+        },
+        watch: {}
+    }
+</script>

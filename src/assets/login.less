@@ -1,0 +1,385 @@
+div {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font: inherit;
+  font-size: 100%;
+  vertical-align: baseline;
+}
+
+ol,
+ul {
+  list-style: none;
+}
+
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+caption,
+th,
+td {
+  text-align: left;
+  font-weight: normal;
+  vertical-align: middle;
+}
+
+q,
+blockquote {
+  quotes: none;
+}
+
+q:before,
+q:after,
+blockquote:before,
+blockquote:after {
+  content: "";
+  content: none;
+}
+
+a img {
+  border: none;
+}
+
+article,
+aside,
+details,
+figcaption,
+figure,
+footer,
+header,
+hgroup,
+main,
+menu,
+nav,
+section,
+summary {
+  display: block;
+}
+
+.page {
+  width: 100%;
+  position: relative;
+  background: url(../../static/image/bg.png) no-repeat;
+  background-size: cover;
+  width: 100%;
+}
+
+/* line 18, ../sass/page.scss */
+
+.page .login-box {
+  -moz-transform: translate(-50%, -50%);
+  -ms-transform: translate(-50%, -50%);
+  -webkit-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+  top: 30%;
+  position: absolute;
+  left: 65%;
+  width: 460px;
+  height: 435px;
+  padding: 10px;
+}
+
+/* line 26, ../sass/page.scss */
+
+.page .login-box .login-title {
+  color: #000000;
+  font-size: 44px;
+  line-height: 62px;
+  padding-left: 42px;
+  position: relative;
+  top: 30%;
+}
+
+/* line 32, ../sass/page.scss */
+
+.page .login-box .login-title:before {
+  content: "";
+  width: 6px;
+  height: 39px;
+  background-color: #509BFC;
+  position: absolute;
+  top: 13px;
+  left: 6px;
+}
+
+/* line 42, ../sass/page.scss */
+
+.page .login-box form {
+  position: relative;
+  margin-top: 30%;
+}
+
+/* line 43, ../sass/page.scss */
+
+.page .login-box form .del {
+  position: absolute;
+  color: #509BFC;
+  font-size: 42px;
+  right: 9px;
+  top: 5px;
+  font-weight: 100;
+  cursor: pointer;
+  display: none;
+}
+
+/* line 53, ../sass/page.scss */
+
+.page .login-box form .show-psd {
+  position: absolute;
+  height: 15px;
+  width: 25px;
+  color: #848484;
+}
+
+/* line 60, ../sass/page.scss */
+
+.page .login-box form .psd-error {
+  color: #FF6000;
+  margin-left: 42px;
+  font-size: 16px;
+  line-height: 22px;
+  display: none;
+  margin-top: 15px;
+}
+
+/* line 68, ../sass/page.scss */
+
+.page .login-box form .psd-error.show-error {
+  display: block;
+}
+
+/* line 71, ../sass/page.scss */
+
+.page .login-box form .show-error + .submit {
+  margin-top: 51px;
+}
+
+/* line 74, ../sass/page.scss */
+
+.page .login-box form .user-icon {
+  position: absolute;
+  height: 27px;
+  width: 18px;
+  background: url(../../static/image/icon-shoujidenglu@3x.png);
+  background-size: 100%;
+  top: 17px;
+  left: 0;
+}
+
+/* line 83, ../sass/page.scss */
+
+.page .login-box form .psd-icon {
+  width: 26px;
+  height: 29px;
+  position: absolute;
+  background: url(../../static/image/icon_register_mobile@3x.png);
+  background-size: 100%;
+  top: 98px;
+  left: 0;
+}
+
+/* line 93, ../sass/page.scss */
+
+.page .login-box form input {
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  height: 55px;
+  box-sizing: border-box;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #848484;
+  width: 418px;
+  margin-left: 42px;
+  font-size: 26px;
+}
+
+.page .login-box form input::-webkit-input-placeholder {
+  color: #848484;
+  font-weight: 300;
+}
+
+.page .login-box form input:-moz-placeholder {
+  color: #848484;
+  font-weight: 300;
+}
+
+.page .login-box form input::-moz-placeholder {
+  color: #848484;
+  font-weight: 300;
+}
+
+.page .login-box form input:-ms-input-placeholder {
+  color: #848484;
+  font-weight: 300;
+}
+
+/* line 121, ../sass/page.scss */
+
+.page .login-box form .psd-input {
+  margin-top: 28px;
+}
+
+/* line 124, ../sass/page.scss */
+
+.page .login-box form .submit {
+  background: #373d41;
+  height: 71px;
+  border: none;
+  color: white;
+  font-size: 32px;
+  -moz-border-radius: 35px;
+  -webkit-border-radius: 35px;
+  border-radius: 35px;
+  margin-top: 78px;
+  cursor: pointer;
+}
+
+/* line 133, ../sass/page.scss */
+
+.page .login-box form .able-submit.submit {
+  background: #007AFF;
+  cursor: pointer;
+}
+
+.login {
+  background: #F0F6FF;
+  .header {
+    width: 100%;
+    height: 80px;
+    line-height: 80px;
+    background: #fff;
+    .logo {
+      float: left;
+      margin: 0 0 0 28px;
+      .icon-logo {
+        display: inline-block;
+        width: 120px;
+        height: 23px;
+        background: url(../../static/image/icon_Logo.png) no-repeat;
+        vertical-align: middle;
+        margin: -5px 0 0 0;
+      }
+      .blue {
+        font-size: 20px;
+        font-weight: bold;
+        color: #56A4FF;
+      }
+      .gray {
+        margin: 0 5px;
+        font-size: 22px;
+        color: #D8D8D8;
+      }
+    }
+  }
+  .login-form {
+    width: 100%;
+    height: 580px;
+    background: url(../../static/image/bg.png) no-repeat scroll center center / cover;
+    clear: both;
+    .main {
+      width: 1100px;
+      margin: 0 auto;
+      position: relative;
+      .bg-font {
+        float: left;
+        color: #fff;
+        animation: lefteaseinAnimate 1s ease 1;
+        animation-fill-mode: forwards;
+        .font-42 {
+          font-size: 42px;
+          padding-top: 230px;
+        }
+        .font-36 {
+          font-size: 36px;
+          margin-left: 50px;
+        }
+      }
+      .login-box {
+        width: 416px;
+        height: 412px;
+        margin-top: 60px;
+        background-color: rgba(255, 255, 255, 0.8);
+        border-radius: 8px;
+        float: right;
+        position: relative;
+        .nav ul li {
+          height: 86px;
+          line-height: 86px;
+          width: 49.5%;
+          color: #56A4FF;
+          font-size: 20px;
+          display: inline-block;
+          text-align: center;
+          transition: opacity 1s linear;
+        }
+        .form {
+          position: relative;
+          width: 100%;
+          height: 370px;
+          text-align: center;
+          padding: 10px 0;
+          .form-input {
+            width: 386px;
+            height: 59px;
+            margin: 20px auto;
+            background: #fff;
+            border: 1px solid #fff;
+            border-radius: 4px;
+            position: relative;
+            .icon-name {
+              position: absolute;
+              top: 12px;
+              left: 10px;
+              display: inline-block;
+              width: 24px;
+              height: 30px;
+              background: url(../../static/image/icon-name.png) no-repeat;
+            }
+            .icon-psw {
+              position: absolute;
+              top: 13px;
+              left: 10px;
+              display: inline-block;
+              width: 24px;
+              height: 28px;
+              background: url(../../static/image/icon-psw.png) no-repeat;
+            }
+            input {
+              width: 100%;
+              height: 59px;
+              border: none;
+              text-indent: 50px;
+              border-radius: 4px;
+            }
+          }
+          .submit {
+            width: 386px;
+            height: 59px;
+            margin: 40px auto;
+            background: #56A4FF;
+            color: #fff;
+            border-radius: 4px;
+            border: none;
+            font-size: 22px;
+            cursor: pointer;
+            transition: all 0.5s linear;
+            &:hover {
+              background: #418EE7;
+            }
+          }
+        }
+      }
+    }
+  }
+  .footer {
+    width: 100%;
+    height: 52px;
+    line-height: 52px;
+    padding: 0 52px;
+    background: #fff;
+    color: #9B9B9B;
+    text-align: center;
+  }
+}

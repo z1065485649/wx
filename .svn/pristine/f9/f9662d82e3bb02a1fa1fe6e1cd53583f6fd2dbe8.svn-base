@@ -1,0 +1,124 @@
+<style lang="less" scoped>
+
+</style>
+
+
+<template>
+    <div class="content">
+        <Row>
+            <Col span="8" style="border-top: 1px solid #DDDDDD;">
+            <MenuTree v-model="selectPath" :node="menus" :level="1" :left="40" :isRoot="true" @addChild="addChild" @editNode="editResource" @deleteNode="deleteResource"></MenuTree>
+            </Col>
+            <Col span="16" style="padding-left: 20px;">
+            <LeafList :list="currentList" @editResource="editResource" @deleteResource="deleteResource"></LeafList>
+            </Col>
+        </Row>
+        <ResourceModalForm ref="resourceModalForm"/>
+    </div>
+</template>
+
+
+<script>
+    import bus from "@/libs/bus";
+    import LeafList from "./LeafList";
+    import MenuTree from "@/components/MenuTree";
+    import ResourceModalForm from "./ResourceModalForm";
+
+    let defaultRootNode = {
+        name: "全部菜单"
+    };
+
+    export default {
+        name: "ResourceManager",
+        created: function () {
+            this.fetchMenuTree();
+        },
+        watch: {
+            selectPath: function () {
+                if (!this.selectPath) return;
+                let path = this.selectPath.split("/").filter(s => s);
+                this.currentNode = this.getTreeNodeByPath(this.menus, path);
+                if (path && path.length) {
+                    this.$http.get(`resource/${this.currentNode.id}/children`, {
+                        params: {menu: false}
+                    }).then(result => {
+                        this.currentList = result.data;
+                    });
+                } else {
+                    this.currentList = [];
+                }
+            }
+        },
+        data: function () {
+            return {
+                selectPath: null,
+                currentNode: null,
+                currentList: null,
+                menus: defaultRootNode
+            };
+        },
+        methods: {
+            fetchMenuTree() {
+                this.$http.get("resource/menus").then(result => {
+                    this.menus = result.data;
+                });
+            },
+
+            addChild(parent) {
+                this.$refs.resourceModalForm
+                    .addResource(parent)
+                    .then(result => {
+                        this.fetchMenuTree();
+                    });
+            },
+
+            editResource(resource) {
+                this.$refs.resourceModalForm
+                    .editResource(resource)
+                    .then(result => {
+                        this.fetchMenuTree();
+                    });
+            },
+
+            deleteResource(resource) {
+                this.$Modal.confirm({
+                    title: "确认删除",
+                    content: `<p>确定要删除 [${resource.name}] 吗？</p>`,
+                    onOk: () => {
+                        this.$http
+                            .delete(`/resource/${resource.id}`)
+                            .then(result => {
+                                this.$Message.success("删除成功");
+                                this.fetchMenuTree();
+                            });
+                    }
+                });
+            },
+
+            getTreeNodeByPath(root, path) {
+                if (!root || !path || !path.length) {
+                    return null;
+                }
+
+                let subpath = Array.apply(this, path);
+                let currentId = subpath.shift();
+                let array = root.children.filter(c => c.id == currentId);
+                if (!array || !array.length) {
+                    return null;
+                }
+                let current = array[0];
+                if (!subpath.length) {
+                    return current;
+                } else {
+                    return this.getTreeNodeByPath(current, subpath);
+                }
+            }
+        },
+
+        components: {
+            MenuTree,
+            LeafList,
+            ResourceModalForm,
+        }
+    };
+</script>

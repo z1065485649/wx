@@ -1,0 +1,23 @@
+let orderList = {
+    name: 'orderList',
+    path: '/orderList',
+    meta: {
+        title: "订单列表",
+        breadcrumb: false,
+    },
+    component: (resolve) => require(['@/views/live/orderManage/orderList'], resolve),
+};
+
+export default {
+    path: '/order/manage',
+    redirect: '/orderList',
+    meta: {
+        title: "订单管理",
+        breadcrumb: true
+    },
+    component: {
+        name: 'orderManage',
+        template: '<router-view></router-view>'
+    },
+    children: [orderList]
+}

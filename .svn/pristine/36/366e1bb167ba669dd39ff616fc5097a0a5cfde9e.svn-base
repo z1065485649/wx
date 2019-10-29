@@ -1,0 +1,194 @@
+<!-- 课程章节 -->
+<style lang="less" scoped>
+    .chapter {
+        .cur{
+            border: 1px solid #2d8cf0;
+            color: #2d8cf0;
+        }
+        .topDel{
+            display:block;
+            text-align:center;
+            position: absolute;
+            right: 5px;
+            top:0;
+        }
+    }
+</style>
+
+<template>
+    <div class="chapter">
+            <p style="margin: 0% 0% 2% 2%">课程名称：田耕教授病历讨论</p>
+            <Row>
+                <Col span="1" v-for="(x,index) in chapterSortList" :key="x.id" style="margin:0% 1.9% 0.3% 1%;">
+                    <div  style="width: 109px;height: 36px;position: relative;text-align: center" @click="tabChapter(x,index)" :class="[cur==x.id?'ivu-btn ivu-btn-ghost cur':'ivu-btn ivu-btn-ghost']" >第{{index+1}}章<span v-show="index>0" class="topDel" @click="delChapter(x.id,index)">x</span></div>
+                </Col>
+                <Col span="1" style="margin-left: 1.1%"><Button type="dashed"  icon="plus-round" @click="addChapter">新增章节</Button></Col>
+            </Row><br/>
+            <Form ref="formObject"  :model="formObject" :label-width="150" style="width:800px">
+                <FormItem label="章节名称：" prop="name" :rules="{required: true,message: '章节名称不能为空!', trigger: 'blur'}">
+                    <input type="text" v-model="formObject.name" style="width:300px" :maxlength="50"
+                           class="ivu-input"
+                           @blur="blurValidate"
+                           onkeyup="(this.v=function(){this.value=this.value.replace(/^\s+|\s+$/g,'');}).call(this)"
+                           >
+                     </Input>
+                </FormItem>
+                <FormItem label="章节顺序：" prop="sort">
+                    <InputNumber :min="0" :max="999999" :step="1" v-model="formObject.sort"></InputNumber>
+                   <!-- <Input type="text" v-model="formObject.sort" style="width:100px" :maxlength="50"></Input>-->
+                </FormItem>
+                <FormItem>
+                    <Button type="dashed"  icon="plus-round" @click="addHour(formObject)">新增课时</Button>
+                </FormItem>
+                <div style="border:1px solid #dddee1;margin-bottom: 2%" v-for="(item,index) in formObject.hourList" :key="item.id">
+                    <p align="right" style="margin-right:1%;cursor: pointer;"><span @click="delHour(index)">x</span></p>
+                    <FormItem label="课时名称：" :prop="'hourList.' + index + '.hourName'" :rules="{required: true,message: '课时名称不能为空!',trigger:'blur'}">
+                        <input type="text" v-model="item.hourName"  @blur="blurValidate" style="width:300px" :maxlength="50"
+                               class="ivu-input"
+                               onkeyup="(this.v=function(){this.value=this.value.replace(/^\s+|\s+$/g,'');}).call(this)"
+                        ></input>
+                    </FormItem>
+                    <FormItem label="课时顺序：" prop="hourSort" >
+                        <InputNumber :min="0" :max="99999" :step="1" v-model="item.hourSort"></InputNumber>
+                       <!-- <Input type="text" v-model="item.hourSort" style="width:300px" :maxlength="50"></Input>-->
+                    </FormItem>
+                    <FormItem label="URL：" :prop="'hourList.' + index + '.url'" :rules="{required: true,message: 'URL不能为空!',trigger:'blur'}">
+                        <Select v-model="item.urlType" style="width:150px">
+                            <Option value="video">视频访问地址</Option>
+                            <Option value="transcribe">录制地址</Option>
+                            <Option value="live">直播地址</Option>
+                        </Select>
+                        <input type="text" v-model="item.url" style="width:400px"
+                               class="ivu-input"
+                               @blur="blurValidate"
+                               onkeyup="(this.v=function(){this.value=this.value.replace(/^\s+|\s+$/g,'');}).call(this)"
+                        ></input>
+                    </FormItem>
+                    <FormItem label="运营策略：" prop="trySee" >
+                        试看<!--<Input type="text" v-model="item.trySee" style="width:100px" :maxlength="20"></Input>-->
+                        <InputNumber :min="-1" :max="10" :step="1" v-model="item.trySee"></InputNumber>
+                        &nbsp;分钟(0，要收费，不能大于10，-1为全部要看)
+                    </FormItem>
+                </div>
+            </Form>
+            <br/><br/>
+            <Row style="margin-left:25%;">
+                <Button type="primary" @click="handleSubmit">提交</Button>
+                <Button type="ghost" @click="handleReset" style="margin-left: 8px">返回</Button>
+            </Row>
+    </div>
+</template>
+<script>
+    import util from '@/libs/util'
+    export default{
+        name: '',
+        props: {},
+        data: function () {
+            return {
+                cur:1,
+                chapterSortList:[{id:'1',sort:1}],
+                formChapter:[{
+                    chapter:'1',
+                    name:'',
+                    sort:0,
+                    hourList:[{hourName:'',hourSort:0,url:'',urlType:'video',trySee:0}],
+                }],
+                formObject:{hourName:'',hourSort:0,url:'',urlType:'video',trySee:0},
+            }
+        },
+        created: function () {
+            this.formChapter.forEach(x=>{
+                if(x.chapter==this.cur){
+                    this.formObject=x;
+                }
+            });
+        },
+        methods: {
+            blurValidate(){
+                this.$refs['formObject'].validate();
+            },
+            addChapter(){
+                this.$refs['formObject'].validate((valid) => {
+                    if (valid) {
+                        let id=this.chapterSortList.length+1;
+                        this.chapterSortList.push({id:id})
+                        this.formChapter.push({
+                            chapter:id,
+                            name:'',
+                            sort:0,
+                            hourList:[{hourName:'',hourSort:0,url:'',urlType:'video',trySee:0}],
+                        });
+                        this.cur=id;
+                        this.formChapter.forEach(x=>{
+                            if(x.chapter==this.cur){
+                                this.formObject=x;
+                            }
+                        });
+                        this.$Message.success('提交成功!');
+                    } else {
+                        this.$Message.error('请填写完整!');
+                    }
+                });
+            },
+            tabChapter(obj,index){
+                this.cur=obj.id;
+                this.formChapter.forEach(x=>{
+                    if(x.chapter==this.cur){
+                        this.formObject=x;
+                    }
+                });
+                //最后一个不验证
+                if(this.chapterSortList.length!=index+1){
+                    setTimeout(()=>{
+                        this.$refs['formObject'].validate((valid)=>{});
+                    },200);
+                }
+            },
+            delChapter(id,index){
+                let sort;
+                this.formChapter.forEach((x,index)=>{
+                    if(id==x.chapter){
+                        sort=index;
+                    }
+                });
+                this.chapterSortList.splice(index,1);
+                this.formChapter.splice(sort,1);
+                this.formObject=this.formChapter[sort-1];
+                //选中
+                setTimeout(()=>{
+                    this.cur=this.formObject.chapter;
+                    //console.info(this.cur,this.formObject);
+                },200);
+            },
+            addHour(obj){
+                obj.hourList.push({hourName:'',hourSort:0,url:'',urlType:'video',trySee:0});
+            },
+            delHour(index){
+                let temp;
+                this.formChapter.forEach((x,index)=>{
+                    if(x.chapter==this.cur){
+                        temp=index;
+                    }
+                });
+                this.formChapter[temp].hourList.splice(index,1);
+            },
+            handleSubmit(){
+                this.$refs['formObject'].validate((valid) => {
+                    if (valid) {
+                        this.$Message.success('Success!');
+                    } else {
+                        this.$Message.error('Fail!');
+                    }
+                })
+            },
+            handleReset(){
+
+            },
+        }
+        ,
+        computed: {},
+        components: {}
+        ,
+        watch: {}
+    }
+</script>

@@ -1,0 +1,35 @@
+/**
+ * 直播管理
+ * Created by bainuo on 2017/12/18.
+ */
+let liveManageRoute = {
+    path: '/liveList',
+    meta: {
+        title: "直播管理",
+        breadcrumb: false,
+    },
+    component: (resolve) => require(['@/views/live/liveManage/liveMangePage'], resolve),
+};
+let liveMangeAddRoute={
+    name:'liveMangeAdd',
+    path:'/liveMangeAdd',
+    meta:{
+        title:"新增直播",
+        breadcrumb: true,
+    },
+    component: (resolve) => require(['@/views/live/liveManage/liveMangeAdd'], resolve),
+};
+
+export default {
+    path: '/live/manage',
+    redirect: '/liveList',
+    meta: {
+        title: "直播管理",
+        breadcrumb: true
+    },
+    component: {
+        name: 'liveList',
+        template: '<router-view></router-view>'
+    },
+    children: [liveManageRoute,liveMangeAddRoute]
+}

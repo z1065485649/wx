@@ -1,0 +1,29 @@
+<style lang="less">
+    @import "assets/common.less";
+</style>
+
+<template>
+    <div style="height: 100%;" id="app">
+        <router-view></router-view>
+    </div>
+</template>
+
+<script>
+    import bus from '@/libs/bus'
+    import user from '@/libs/user'
+
+    export default {
+        name: 'APP',
+        created: function () {
+            let token = localStorage.getItem("token");
+
+            bus.$on('logout', () => {
+                localStorage.clear();
+                sessionStorage.clear();
+                this.$router.push({
+                    name: 'login'
+                });
+            });
+        }
+    }
+</script>

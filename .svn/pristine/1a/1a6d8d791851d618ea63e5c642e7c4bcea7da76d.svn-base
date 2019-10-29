@@ -1,0 +1,99 @@
+<!-- 上传文件 -->
+<style lang="less" scoped>
+    .contentUpload {
+
+    }
+</style>
+
+<template>
+    <div class="contentUpload" >
+        <Upload ref="uld" :show-upload-list="showUploadList" :action="uploadApiUrl"
+                :on-success="uploadFileSuccess"
+                :format="formats"
+                :max-size="maxSize"
+                :multiple="multiple"
+                :data="uploadParams"
+                >
+            <Button type="ghost" icon="ios-cloud-upload-outline">插入图片</Button>
+        </Upload>
+    </div>
+</template>
+<script>
+    export default{
+        name: 'UploadFile',
+        props: {
+            showUploadList:{
+                type:Boolean,
+                default:false,
+            },
+            //是否允许多选
+            multiple: {
+                type: Boolean,
+                default: false
+            },
+            //最多上传100张，默认
+            maxNum: {
+                type: Number,
+                default: 100
+            },
+            //上传大小kb,默认5M
+            maxSize: {
+                type: Number,
+                default: 5002880
+            },
+            //上传方式
+            mode: {
+                type: String,
+                default: "drag"
+            },
+            //上传图片类型
+            formats: {
+                type: Array,
+                default() {
+                    return ["jpg", "jpeg", "png"];
+                }
+            },
+            //图片用途
+            purpose: {
+                type: String,
+                default:'useravatar',
+            }
+        },
+        data: function () {
+            return {
+                uploadApiUrl: '',
+                uploadParams: {},
+            }
+        },
+        created: function () {
+            this.$http
+                .get('/api/getUploadParams', {
+                    params: {purpose: this.purpose}
+                })
+                .then((result) => {//上传
+                    let data = result.data;
+                    this.uploadApiUrl = data.url;
+                    Object.assign(this.uploadParams, {
+                        policy: data.policy,
+                        Signature: data.Signature
+                    });
+                });
+        },
+        methods: {
+            uploadFileSuccess(response, file){
+                let data = response.data;
+                let url = data.location + data.filepath;
+                Object.assign(file, data, {url: url});
+                this.$emit("uploadFile", {
+                    url: url,
+                    path: data.filepath
+                });
+            }
+        }
+        ,
+        computed: {},
+        components: {}
+        ,
+        watch: {}
+    }
+</script>

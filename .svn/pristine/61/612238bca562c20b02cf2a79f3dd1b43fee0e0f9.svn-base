@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<style>
+			.logo {
+				float: left;
+				margin: 0 0 0 28px;
+			}
+			
+			.blue {
+				font-size: 20px;
+				font-weight: bold;
+				color: #56A4FF;
+			}
+			
+			.gray {
+				margin: 0 5px;
+				font-size: 22px;
+				color: #D8D8D8;
+			}
+			
+			.download {
+				float: right;
+				margin: 0 28px 0 0;
+			}
+			
+			.header a {
+				display: inline-block;
+				width: 139px;
+				height: 42px;
+				line-height: 42px;
+				color: #56A4FF;
+				border: 1px solid #56A4FF;
+				text-align: center;
+			}
+			
+			.header {
+				width: 100%;
+				height: 80px;
+				line-height: 80px;
+				background: #fff;
+				border-bottom:1px solid rgb(240,246,255);
+			}
+			
+			.container h1 span,
+			.sprite {
+				vertical-align: middle;
+				*zoom: 1
+			}
+			.container{
+				width: 745px;
+				margin: 70px auto 0;
+				position: relative;
+			}
+			.container h1{
+				color: red;
+				font-size: 16px;
+				text-align: center;
+				margin-top: 50px;
+				margin-bottom: 40px;
+			}
+			.box ul li,
+			.box-title,
+			.pc-box li a {
+				text-align: center
+			}
+			.box-title b,
+			.pc-box li a b {
+				font-weight: 400
+			}
+			.sprite {
+				background-size: 1154px 141px;
+				display: inline-block;
+				*display: inline;
+				image-rendering: pixelated
+			}
+			.sprite.chrome {
+				background: url(./image/Chrome.png) center center no-repeat;
+				background-position: 0 0;
+				width: 100px;
+				height: 100px
+			}
+			.sprite.ff {
+				background: url(./image/firefox.png) center center no-repeat;
+				background-position: 0 0;
+				width: 110px;
+				height: 110px
+			}
+			.sprite.pc {
+				background: url(./image/compute.png) center center no-repeat;
+				background-position: 0 0;
+				width: 122px;
+				height: 110px
+			}
+			a,
+			body,
+			div,
+			h1,
+			i,
+			li,
+			p,
+			span,
+			ul {
+				margin: 0;
+				padding: 0
+			}
+			
+			body {
+				font-size: 14px;
+				line-height: 1.5;
+				padding-bottom: 50px;
+				font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "\5FAE\8F6F\96C5\9ED1", Arial, sans-serif;
+			    line-height: 1.5;
+			    color: #495060;
+			}
+			
+			a {
+				outline: 0;
+				text-decoration: none
+			}
+			
+			a img {
+				border: none
+			}
+			
+			li,
+			ul {
+				list-style: none
+			}
+			
+			em,
+			i {
+				font-style: normal
+			}
+			
+			#langs {
+				position: absolute;
+				right: 0;
+				top: -25px;
+				color: #000
+			}
+			
+			#langs i {
+				cursor: pointer
+			}
+			
+			#langs .on {
+				color: #F40
+			}
+			.box {
+				height: 260px;
+				margin-top: 10px;
+				position: relative;
+				background-color: #f0f7ed;
+				padding-left: 260px
+			}
+			
+			.box-title {
+				position: absolute;
+				left: 0;
+				top: 0;
+				bottom: 0;
+				height: 260px;
+				width: 230px;
+				background-color: #34acf2;
+				color: #FFF
+			}
+			
+			.box-title i {
+				margin-top: 46px
+			}
+			
+			.box-title b {
+				display: block;
+				font-size: 22px;
+				line-height: 90px
+			}
+			
+			.box-title .arrow {
+				border-width: 15px 12px;
+				border-style: solid;
+				border-color: transparent;
+				_border-color: pink;
+				_filter: chroma(color=pink);
+				border-left-color: #34acf2;
+				position: absolute;
+				right: -24px;
+				top: 50%;
+				margin-top: -12px;
+				width: 0;
+				height: 0;
+				line-height: 0;
+				font-size: 0
+			}
+			
+			.box ul {
+				overflow: hidden;
+				padding-top: 30px
+			}
+			
+			.box ul li {
+				float: left;
+				display: inline;
+				*zoom: 1;
+				width: 240px;
+				height: 230px
+			}
+			
+			.box ul li.seperator {
+				width: 1px;
+				border-right: 1px solid #FFF;
+				border-left: 1px solid #e9f3e1
+			}
+			.chrome-item {
+				color: #87c308
+			}
+			
+			.ff-item {
+				color: #34acf2
+			}
+			.pc-box li a {
+				display: inline-block;
+				*display: inline;
+				*zoom: 1;
+				width: 168px;
+				height: 40px;
+				line-height: 40px;
+				color: #FFF;
+				background-color: #87c308;
+				position: relative;
+				font-size: 18px
+			}
+			
+			.pc-box li p {
+				margin-top: 28px;
+				margin-bottom: 8px
+			}
+			
+			.pc-box li a:hover em {
+				right: 16px
+			}
+			
+			.pc-box li a:hover i {
+				right: 18px
+			}
+			
+			.pc-box li.ff-item a {
+				background-color: #34acf2
+			}
+			
+			.pc-box li.uc-item a {
+				background-color: #f88c0d
+			}
+			
+			.pc-box li a em,
+			.pc-box li a i {
+				border-width: 7px 6px;
+				border-style: solid;
+				border-color: transparent;
+				_border-color: pink;
+				_filter: chroma(color=pink);
+				border-left-color: #41901a;
+				position: absolute;
+				right: 18px;
+				top: 13px;
+				width: 0;
+				height: 0;
+				line-height: 0;
+				font-size: 0
+			}
+			
+			.pc-box li a i {
+				border-left-color: #87c308;
+				right: 20px
+			}
+			
+			.pc-box li.ff-item a em {
+				border-left-color: #1777b3
+			}
+			
+			.pc-box li.ff-item p {
+				margin-top: 16px;
+				*margin-top: 13px
+			}
+			
+			.pc-box li.ff-item a i {
+				border-left-color: #34acf2
+			}
+			
+			.pc-box li.uc-item a em {
+				border-left-color: #cf4b1a
+			}
+			
+			.pc-box li.uc-item a i {
+				border-left-color: #f88c0d
+			}
+			.footer{
+				position: fixed;
+				bottom: 0;
+				margin-top: 250px;
+				text-align: center;
+				width: 100%;
+				margin-bottom: 50px;
+			}
+			.footer span{
+				color: #888;
+			}
+			.footer-right{
+				margin-left: 40px;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div class="header">
+			<div class="logo"><span class="blue">Bainuo百诺</span><i class="gray">|</i><span style="font-size: 16px;">百诺医疗医生端</span></div>
+		</div>
+		<div class="container">
+			<h1>温馨提醒：您当前的浏览器版本过低，存在安全风险，建议升级浏览器</h1>
+			<DIV class="box pc-box">
+				<SPAN class=box-title><I class="sprite pc"></I><B lang-en="browsers for pc" lang-zh="浏览器升级推荐">浏览器升级推荐</B> <EM class=arrow></EM></SPAN>
+				<UL>
+					<LI class=chrome-item>
+						<I class="sprite chrome"></I>
+						<P lang-en="Recommended Choice" lang-zh="推荐选择">推荐选择</P>
+						<A id=chrome href="https://www.google.cn/intl/zh-CN/chrome/browser/desktop/" target=_blank data-spm-click="gostr=/updater;locaid=d1;name=google" href-zh="https://www.google.cn/intl/zh-CN/chrome/browser/desktop/" href-en="https://www.google.com/intl/en/chrome/browser/desktop/">
+							<B lang-en="Chrome" lang-zh="谷歌浏览器">谷歌浏览器</B>
+						</A>
+					</LI>
+					<LI class=seperator></LI>
+					<LI class=ff-item>
+						<I class="sprite ff"></I>
+						<P lang-en="Recommended Choice" lang-zh="推荐选择">推荐选择</P>
+						<A href="http://www.mozilla.com/firefox/" target=_blank data-spm-click="gostr=/updater;locaid=d2;name=firefox">
+							<B lang-en="FireFox" lang-zh="火狐浏览器">火狐浏览器</B>
+						</A>
+					</LI>
+				</UL>
+			</DIV>
+		</div>
+		<div class="footer">
+			<span class="footer-left">深圳百诺国际整合医疗有限公司</span><span class="footer-right">Copyright © 2016-2017 Bainuo. All Rights Reserved.</span>
+		</div>
+	</body>
+</html>

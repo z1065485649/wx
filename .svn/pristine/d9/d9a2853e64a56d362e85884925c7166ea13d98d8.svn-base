@@ -1,0 +1,194 @@
+<!--直播管理-->
+<style lang="less" scoped>
+    .content {
+
+    }
+</style>
+
+<template>
+    <div class="content">
+        <Row>
+            <Col span="18" push="1">
+            直播主题&nbsp;&nbsp;<Input v-model="query.key" placeholder="" style="width: 300px"></Input>
+                <Button type="primary">查询</Button>
+            </Col>
+            <Col span="5" align="right">
+                <Button type="primary" @click="liveMangeAdd">新增直播</Button>
+            </Col>
+        </Row>
+        <br/>
+        <Row>
+            <Col>
+                <Table border :data="tableData" :columns="tableColumns"></Table>
+                <div style="margin: 10px;overflow: hidden">
+                    <div style="float: right;">
+                        <Page :page-size-opts="[10,20,50,100]" :total="page.total" :page-size="page.size" :current="page.index" @on-change="changePage"></Page>
+                    </div>
+                </div>
+            </Col>
+        </Row>
+    </div>
+</template>
+<script>
+    export default{
+        name: '',
+        props: {},
+        data: function () {
+            return {
+                query:{
+                    key:'',
+                },
+                page: { //分页参数
+                    size: 10,
+                    index: 1,
+                    total: 0,
+                },
+                tableData:[{id:'111',theme:'xxx',create:'aaa',lastUpdateTime:'',type:'fq',state:'bbb'}],
+                tableColumns:[{
+                    title: '直播id',
+                    key: 'id'
+                }, {
+                    title: '直播主题',
+                    key: 'theme'
+                },{
+                    title: '创建者',
+                    key: 'create'
+                },
+                 {
+                    title: '直播日期',
+                    key: 'lastUpdateTime',
+                    render: (h, params) => {
+                        return h('span', {},'')
+                    }
+                }, {
+                    title: '直播类型',
+                    key: 'type',
+                    render: (h, params) => {
+                        return h('span', {},'xx')
+                    }
+                }, {
+                        title: '直播状态',
+                        key: 'state',
+                        render: (h, params) => {
+                            return h('span', {},params.row.state)
+                        }
+                    },
+                    {
+                    title: '操作',
+                    key: 'action',
+                    width: 280,
+                    align: 'center',
+                    render: (h, params) => {
+                        return h('div', [
+                            h('Button', {
+                                props: {
+                                    type: 'text',
+                                    size: 'small'
+                                },
+                                style: {
+                                    color: '#4DA1FF'
+                                },
+                                on: {
+                                    click: () => {
+                                        this.editLive(params.row);
+                                    }
+                                }
+                            }, '编辑'),
+                            h('Button', {
+                                props: {
+                                    type: 'text',
+                                    size: 'small'
+                                },
+                                style: {
+                                    color: '#4DA1FF'
+                                },
+                                on: {
+                                    click: () => {
+                                        this.delLive(params.row);
+                                    }
+                                }
+                            }, '删除'),
+                            h('Button', {
+                                props: {
+                                    type: 'text',
+                                    size: 'small'
+                                },
+                                style: {
+                                    color: '#4DA1FF'
+                                },
+                                on: {
+                                    click: () => {
+                                        this.detailsLive(params.row)
+                                    }
+                                }
+                            },'查看详情'),
+                            h('Button', {
+                                props: {
+                                    type: 'text',
+                                    size: 'small'
+                                },
+                                style: {
+                                    color: '#4DA1FF'
+                                },
+                                on: {
+                                    click: () => {
+                                        this.uploadLive(params.row);
+                                    }
+                                }
+                            }, '上传附件')
+                        ]);
+                    }
+                }],
+            }
+        },
+        created: function () {
+
+        },
+        methods: {
+            changePage(index){
+
+            },
+            editLive(obj){
+                this.$router.push({name:'liveMangeAdd'})
+            },
+            delLive(obj){
+                this.$Modal.confirm({
+                    title: '提示',
+                    content:"确定删除该直播吗?",
+                    onOk: () => {
+                        /*this.$http.post('fuvGroupEduCategory/del?pid='+pid+"&id="+id).then((result) => {
+                            if (result.status == "200") {
+                                if (result.data.status == "OK") {
+                                    this.$Message.success(result.data.message);
+                                    this.restPatients();
+                                } else {
+                                    this.$Message.error(result.data.message);
+                                }
+                            } else {
+                                console.log("搜索无数据")
+                            }
+                        }).catch((error) => {
+                            this.$Message.error("出现error" + error);
+                        });*/
+                    },
+                    onCancel: () => {
+                    }
+                });
+            },
+            detailsLive(obj){
+                this.$router.push({name:'liveMangeDetails',query:{id:'1'}});
+            },
+            uploadLive(obj){
+                this.$router.push({name:'liveUploadAccessory',query:{id:'1'}})
+            },
+            liveMangeAdd(){
+                this.$router.push({name:'liveMangeAdd'});
+            }
+        }
+        ,
+        computed: {},
+        components: {}
+        ,
+        watch: {}
+    }
+</script>

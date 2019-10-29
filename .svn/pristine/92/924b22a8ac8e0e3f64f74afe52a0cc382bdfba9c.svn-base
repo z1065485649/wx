@@ -1,0 +1,56 @@
+<style lang="less" scoped>
+    .navbar {
+        height: 60px;
+        line-height: 60px;
+        margin-bottom: 0px;
+        background: #2d8cf0;
+        .toggleSide {
+            width: 50px;
+            font-size: 30px;
+            text-align: center;
+        }
+        li {
+            float: left;
+            a {
+                color: #fff;
+                font-size: 16px;
+                padding: 0px 20px;
+                display: block;
+                text-decoration: none;
+                &.cur,
+                &:hover {
+                    background: #2b85e4;
+                }
+            }
+        }
+    }
+</style>
+
+<template>
+    <div class="navbar">
+        <ul>
+            <li v-for="nav in navigations" :key="nav.id">
+                <router-link :to="nav.url" active-class="cur">
+                    <Icon :type="nav.icon"></Icon> {{nav.name}}
+                </router-link>
+            </li>
+        </ul>
+    </div>
+</template>
+<script>
+    export default {
+        name: 'Navbar',
+        data: function() {
+            return {
+                navigations: [],
+            }
+        },
+        created: function() {
+            let menus = localStorage.getItem("menus");
+            if (menus) {
+                this.navigations = JSON.parse(menus);
+            }
+        }
+    }
+
+</script>

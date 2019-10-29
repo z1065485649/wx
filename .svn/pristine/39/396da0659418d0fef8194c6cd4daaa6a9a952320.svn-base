@@ -1,0 +1,26 @@
+/**
+ * 精品课程管理
+ * Created by bainuo on 2017/12/19.
+ */
+let courseListRoute={
+    path: '/courseList',
+    meta: {
+        title: "精品课程管理",
+        breadcrumb: false,
+    },
+    component: (resolve) => require(['@/views/live/course/CourseMangeList'], resolve),
+};
+
+export default {
+    name:'course',
+    path: '/boutique/course',
+    redirect: '/courseList',
+    meta: {
+        title: "精品课程管理",
+        breadcrumb: true
+    },
+    component: {
+        template: '<keep-alive include="CourseMangePage"><router-view></router-view></keep-alive>'
+    },
+    children: [courseListRoute]
+}

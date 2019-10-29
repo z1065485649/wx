@@ -1,0 +1,24 @@
+/**
+ * 编辑器
+ * Created by bainuo on 2017/12/18.
+ */
+let editUtils = {
+
+};
+/*
+editUtils.loadjscssfile=function loadjscssfile() {
+    var fileref = document.createElement("link");
+    fileref.setAttribute("rel", "stylesheet");
+    fileref.setAttribute("type", "text/css");
+    fileref.setAttribute("href", "../../static/css/bootstrap.css");
+    fileref.setAttribute("id", "bootstrapcss");
+    if (typeof fileref != "undefined")
+        document.getElementsByTagName("head")[0].appendChild(fileref);
+};
+*/
+
+editUtils.removejscssfile=function removejscssfile() {
+    $("#bootstrapcss").remove();
+    $(".note-popover").remove();
+}
+export default editUtils;

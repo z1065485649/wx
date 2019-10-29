@@ -1,0 +1,342 @@
+<style scoped lang="less">
+
+</style>
+
+<template>
+	<div class="content">
+		<Row>
+			<Col span="8" style="border-top: 1px solid #DDDDDD;">
+			<ul v-for="menuItem in treeData">
+				<VueTree :model='menuItem' :current="current" :left='40'></VueTree>
+			</ul>
+			</Col>
+			<Col span="16" style="padding-left: 20px;">
+			<Row style="margin-bottom: 20px;">
+				<Col span="21">
+				<Input v-model="query.key" :maxlength="20" placeholder="模板名称" style="width: 346px"></Input>
+				<Button type="primary" @click="fetchData">查询</Button>
+				<Button type="primary" @click="clearQuery">清空</Button>
+				</Col>
+				<Col span="3" align="right">
+				<Button type="primary" @click="add('resourceAdd')">添加资源</Button>
+				</Col>
+			</Row>
+			<Row>
+				<Table border :data="tableData" :columns="tableColumns"></Table>
+				<div style="margin: 10px;overflow: hidden">
+					<div style="float: right;">
+						<Page :page-size-opts="[10,20,50,100]" :total="page.total" :page-size="page.size" :current="page.index" @on-change="changePage"></Page>
+					</div>
+				</div>
+			</Row>
+			</Col>
+			</Col>
+		</Row>
+		<Modal v-model="showModal" :loading="loading" title="权限编辑" @on-ok="handleSubmit('formValidate')" @on-cancel="cancel">
+			<Form ref="formValidate" :model="formValidate" :rules="ruleValidate" :label-width="80">
+				<FormItem label="名称" prop="name">
+					<Input v-model="formValidate.name" placeholder="请输入菜单名称"></Input>
+				</FormItem>
+				<FormItem label="排序" prop="sort">
+					<InputNumber :min="1" v-model="formValidate.sort"></InputNumber>
+				</FormItem>
+				<FormItem label="编号" prop="code">
+					<Input v-model="formValidate.code" placeholder="请输入唯一编号"></Input>
+				</FormItem>
+				<FormItem label="链接地址" prop="url">
+					<Input v-model="formValidate.url" placeholder="请输入链接地址"></Input>
+				</FormItem>
+				<FormItem label="图标" prop="iconCode">
+					<Input v-model="formValidate.iconCode" placeholder="请输入图标"></Input>
+				</FormItem>
+				<FormItem label="描述" prop="description">
+					<Input v-model="formValidate.description" type="textarea" :autosize="{minRows: 2,maxRows: 5}" placeholder="请输入..."></Input>
+				</FormItem>
+			</Form>
+		</Modal>
+	</div>
+</template>
+
+<script>
+	import bus from '@/libs/bus'
+	import VueTree from '@/components/Tree'
+	export default {
+		data() {
+				const validateSort = (rule, value, callback) => {
+					if(typeof value != 'number') {
+						callback(new Error('请输入数字'));
+					} else {
+						callback();
+					}
+				};
+				return {
+					loading: true,
+					current: '',
+					showModal: false,
+					modalId:'',
+					parentId:'',
+					menu:true,
+					query: {
+						key: ''
+					},
+					formValidate: {
+						name: '',
+						sort: 1,
+						code: '',
+						url: '',
+						iconCode: '',
+						description: ''
+					},
+					ruleValidate: {
+						name: [{
+							required: true,
+							message: '请填写菜单名称',
+							trigger: 'blur'
+						}],
+						sort: [{
+							required: true,
+							validator: validateSort,
+							trigger: 'blur'
+						}, ],
+						code: [{
+							required: true,
+							message: '请填写唯一编号',
+							trigger: 'blur'
+						}],
+						url: [{
+							required: true,
+							message: '请填写链接地址',
+							trigger: 'blur'
+						}],
+						icon: [],
+						desc: []
+					},
+					page: { //分页参数
+						size: 10,
+						index: 1,
+						total: 0,
+					},
+					tableColumns: [{
+						title: '名称',
+						key: 'name'
+					}, {
+						title: 'url',
+						key: 'url'
+					}, {
+						title: '操作',
+						key: 'action',
+						width: 180,
+						align: 'center',
+						render: (h, params) => {
+							return h('div', [
+								h('Button', {
+									props: {
+										type: 'text',
+										size: 'small'
+									},
+									style: {
+										color: '#4DA1FF'
+									},
+									on: {
+										click: () => {
+											this.edit(params.row);
+										}
+									}
+								}, '编辑'),
+								h('Button', {
+									props: {
+										type: 'text',
+										size: 'small'
+									},
+									style: {
+										color: '#4DA1FF'
+									},
+									on: {
+										click: () => {}
+									}
+								}, '删除')
+							]);
+						}
+					}],
+					tableData: [],
+					treeData: []
+				}
+			},
+			methods: {
+				changePage(val) {
+					this.page.index = val;
+					this.fetchData();
+				},
+				fetchData() {
+					this.$http.get('resource/permission_resource_data?'+
+							'parentId=' + this.current +
+							'&page=' + this.page.index +
+							'&size=' + this.page.size + 
+							'&name=' + this.query.key).then((result) => {
+						if(result.data.status == 'OK'){
+							console.log(result.data)
+							this.tableData = result.data.list;
+							this.page.total = result.data.totalElements;
+						}else{
+							this.$Message.error("出现error" + result.data.message);
+						}
+					}).catch((error) => {
+						this.$Message.error("出现error" + error);
+					});
+				},
+				handleSubmit(name) {
+					this.$refs[name].validate((valid) => {
+						if(valid) {
+							this.$http.post('/resource/save_menu',{
+								id:this.modalId,
+								parentId:this.parentId,
+								name:this.formValidate.name,
+								sort:this.formValidate.sort,
+								code:this.formValidate.code,
+								url:this.formValidate.url,
+								iconCode:this.formValidate.iconCode,
+								description:this.formValidate.description,
+								menu:this.menu
+							}).then((result) => {
+								console.log(result);
+								if(result.data.status == 'OK'){
+									if(this.menu){
+										this.showModal = false;
+										this.$Message.success('提交成功!');
+										this.$http.get('resource/menuTreeData').then((result) => {
+										if(result.data.status == 'OK'){
+												this.treeData = result.data.data;
+											}else{
+												this.$Message.error("出现error" + result.data.message);
+											}
+										}).catch((error) => {
+											this.$Message.error("出现error" + error);
+										});
+									}else{
+										this.showModal = false;
+										this.$Message.success('提交成功!');
+										this.fetchData();
+									}
+								}else{
+									this.$Message.error("出现error" + result.data.message);
+								}
+							}).catch((error) => {
+								this.$Message.error("出现error" + error);
+							});
+						} else {
+							this.loading = false;
+							this.$nextTick(() => {
+								this.loading = true;
+							});
+							this.$Message.error('表单验证失败!');
+						}
+					})
+				},
+				cancel(name) {
+					
+				},
+				clearQuery (){
+					this.query.key = '';
+					this.fetchData();
+				},
+				add (id){
+					this.$refs['formValidate'].resetFields();
+					if(id){
+						if(id == "resourceAdd"){
+							this.parentId = this.current;
+							this.menu = false;
+						}else{
+							this.parentId = id;
+							this.menu = true;
+						}
+						this.modalId = "";
+					}
+					this.showModal = true;
+				},
+				edit (obj){
+					this.$refs['formValidate'].resetFields();
+					if(obj.name){
+						this.$set(this.formValidate,'name',obj.name);
+						this.$set(this.formValidate,'sort',obj.sort);
+						this.$set(this.formValidate,'code',obj.code);
+						this.$set(this.formValidate,'url',obj.url);
+						this.$set(this.formValidate,'iconCode',obj.iconCode);
+						this.$set(this.formValidate,'description',obj.description);
+						this.modalId = obj.id;
+						this.menu = obj.menu;
+						this.parentId = '';
+					}
+					this.showModal = true;
+				},
+				del (id){
+					this.$Modal.confirm({
+                    title: '删除菜单',
+                    content: '<p>确认删除菜单？</p>',
+                    onOk: () => {
+                    	this.$http.post('/resource/delete_menu?resourceId=' + id).then((result) => {
+						if(result.data.status == 'OK'){
+							this.$http.get('resource/menuTreeData').then((result) => {
+								if(result.data.status == 'OK'){
+									this.treeData = result.data.data;
+								}else{
+									this.$Message.error("出现error" + result.data.message);
+								}
+							}).catch((error) => {
+								this.$Message.error("出现error" + error);
+							});
+						}else{
+							this.$Message.error("出现error" + result.data.message);
+						}
+					}).catch((error) => {
+						this.$Message.error("出现error" + error);
+					});
+                    },
+                    onCancel: () => {
+                    }
+                });
+				}
+			},
+			filters: {},
+			created: function() {
+				bus.$emit('leftHeight', 21);
+				bus.$emit('leftMenu', 'manage', 1);
+				bus.$on('updateCur', (cur) => {
+					this.current = cur;
+					this.page.index = 1;
+					this.page.size = 10;
+					this.page.total = 0;
+					this.$http.get('resource/permission_resource_data?'+
+							'parentId=' + this.current +
+							'&page=' + this.page.index +
+							'&size=' + this.page.size + 
+							'&name=' + this.query.key).then((result) => {
+						if(result.data.status == 'OK'){
+							console.log(result.data)
+							this.tableData = result.data.list;
+							this.page.total = result.data.totalElements;
+						}else{
+							this.$Message.error("出现error" + result.data.message);
+						}
+					}).catch((error) => {
+						this.$Message.error("出现error" + error);
+					});
+				});
+				bus.$on('treeAdd', this.add);
+				bus.$on('treeEdit', this.edit);
+				bus.$on('treeDel', this.del);
+				this.$http.get('resource/menuTreeData').then((result) => {
+					if(result.data.status == 'OK'){
+						this.treeData = result.data.data;
+					}else{
+						this.$Message.error("出现error" + result.data.message);
+					}
+				}).catch((error) => {
+					this.$Message.error("出现error" + error);
+				});
+			},
+			components: {
+				VueTree
+			},
+			watch: {}
+	}
+</script>

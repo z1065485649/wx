@@ -1,0 +1,151 @@
+<!-- 上传文件 -->
+<style lang="less" scoped>
+    .contentUpload {
+    }
+</style>
+
+<template>
+    <div class="contentUpload" >
+        <Upload ref="uld" :show-upload-list="showUploadList" :action="uploadApiUrl"
+                :default-file-list="upladFile"
+                :format="formats"
+                :max-size="maxSize"
+                :multiple="multiple"
+                :data="uploadParams"
+                :on-success="uploadFileSuccess"
+                :before-upload="beforeUpload"
+                :on-format-error="formatError"
+                :on-exceeded-size="largeFileError"
+                :on-remove="removeFile"
+                >
+            <Button type="ghost" icon="ios-cloud-upload-outline">{{name}}</Button>
+        </Upload>
+    </div>
+</template>
+<script>
+    export default{
+        name: 'UploadFile',
+        props: {
+            name:{type:String,default:'插入图片'},
+            showUploadList:{
+                type:Boolean,
+                default:false,
+            },
+            //已有的文件列表
+            upladFile: {
+                type: Array,
+                default() {
+                    return [];
+                }
+            },
+            //是否允许多选
+            multiple: {
+                type: Boolean,
+                default: false
+            },
+            //最多上传100张，默认
+            maxNum: {
+                type: Number,
+                default: 100
+            },
+            //上传大小kb,默认5M
+            maxSize: {
+                type: Number,
+                default: 5002880
+            },
+            //上传方式
+            mode: {
+                type: String,
+                default: "drag"
+            },
+            //上传图片类型
+            formats: {
+                type: Array,
+                default() {
+                    return ["jpg", "jpeg", "png"];
+                }
+            },
+            //图片用途
+            purpose: {
+                type: String,
+                default:'useravatar',
+            }
+        },
+        data: function () {
+            return {
+                list: [],
+                uploadApiUrl: '',
+                uploadParams: {},
+            }
+        },
+        created: function () {
+            this.$http
+                .get('/api/getUploadParams', {
+                    params: {purpose: this.purpose}
+                })
+                .then((result) => {//上传
+                    let data = result.data;
+                    this.uploadApiUrl = data.url;
+                    Object.assign(this.uploadParams, {
+                        policy: data.policy,
+                        Signature: data.Signature
+                    });
+                });
+        },
+        methods: {
+            uploadFileSuccess(response, file){
+                let data = response.data;
+                let url = data.location + data.filepath;
+                Object.assign(file, data, {url: url});
+                this.$emit("uploadFile", {
+                    url: url,
+                    path: data.filepath
+                });
+            },
+            removeFile(file, fileList){
+                this.list.splice(this.list.indexOf(file),1);
+                this.$emit("removeFile", {
+                    url: file.url,
+                    path: file.filepath
+                });
+            },
+            formatError(file) {
+                this.$Notice.error({
+                    title: '无效文件',
+                    desc: '文件 ' + file.name + ' 格式不正确，仅支持' + this.formats + '格式的图片。'
+                });
+            },
+            largeFileError(file) {
+                this.$Notice.error({
+                    title: '无效文件',
+                    desc: '文件 ' + file.name + ' 太大，不能超过' + (this.maxSize / 1024).toFixed() + "MB" + '。'
+                });
+            },
+            beforeUpload() {
+                if (this.list.length > this.maxNum) {
+                    this.$Notice.error({
+                        title: '最多只能上传"' + this.maxNum + '" 张图片'
+                    });
+                    return false;
+                }
+                return true;
+            },
+        }
+        ,
+        mounted() {
+            //this.list = this.$refs.uld.fileList;
+        },
+        computed: {},
+        components: {}
+        ,
+        watch: {
+            fileList:function () {
+                this.$refs.uld.clearFiles();//remove
+                this.list = this.$refs.uld.fileList;
+                this.upladFile.forEach(x=>{
+                    this.$refs.uld.fileList.push({'status':'finished','url':x.url});
+                });
+            }
+        }
+    }
+</script>

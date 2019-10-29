@@ -1,0 +1,391 @@
+<style scoped lang="less">
+
+</style>
+
+<template>
+  <div class="content">
+    <Row style="margin-bottom: 20px;">
+      <Col span="21">
+      <Cascader v-model="provinceCityList" :data="CascaderData" :load-data="loadData"
+                style="width: 346px;display: inline-block;"></Cascader>
+      <Button type="primary" @click="queryResult">查询</Button>
+      <Button type="primary" @click="clearQuery">清空</Button>
+      </Col>
+      <Col span="3" align="right">
+      <Button type="primary" @click="addOrEdit">新增</Button>
+      </Col>
+    </Row>
+    <Row>
+      <Table border :data="tableData" :columns="tableColumns"></Table>
+      <div style="margin: 10px;overflow: hidden">
+        <div style="float: right;">
+          <Page :total="page.total" :page-size="page.size" :current="page.index" @on-change="changePage"></Page>
+        </div>
+      </div>
+    </Row>
+    <Modal v-model="showModal" :loading="loading" :title="formValidate.id==''?'新增':'编辑'" @on-ok="handleSubmit('formValidate')" @on-cancel="cancel">
+      <Form ref="formValidate" :model="formValidate" :rules="ruleValidate" :label-width="80">
+        <FormItem label="所属省市" prop="province" :labelWidth="80">
+          <Cascader v-model="formValidate.province" :data="CascaderData" :load-data="loadData"
+                    style="width: 408px;display: inline-block;"></Cascader>
+        </FormItem>
+        <FormItem label="机构名称" prop="orgName">
+          <Input v-model="formValidate.orgName" placeholder="请输入菜单名称"></Input>
+        </FormItem>
+        <FormItem label="状态" prop="status">
+          <Select v-model="formValidate.status">
+            <Option value="1">启用</Option>
+            <Option value="0">禁用</Option>
+          </Select>
+        </FormItem>
+        <FormItem label="描述" prop="orgDesc">
+          <Input v-model="formValidate.orgDesc" type="textarea" :autosize="{minRows: 2,maxRows: 5}"
+                 placeholder="请输入..."></Input>
+        </FormItem>
+      </Form>
+    </Modal>
+  </div>
+</template>
+
+<script>
+  import bus from '@/libs/bus'
+  export default {
+    data() {
+      return {
+        showModal: false,
+        loading: true,
+        provinceCityList: [],
+        query:[],
+        page: { //分页参数
+          size: 10,
+          index: 1,
+          total: 0,
+        },
+        tableColumns: [{
+          title: '序号',
+          type: 'index'
+        }, {
+          title: '所属省',
+          key: 'provinceName'
+        }, {
+          title: '所属市',
+          key: 'cityName'
+        }, {
+          width: 240,
+          title: '机构名称',
+          key: 'name'
+        }, {
+          title: '机构描述',
+          key: 'description'
+        }, {
+          title: '创建时间',
+          key: 'createTime',
+          render: (h, params) => {
+            if (this.tableData[params.index] == undefined) {
+              return;
+            }
+            return h('div', this.byformatTimestamp(this.tableData[params.index].createTime));
+          }
+        }, {
+          title: '更新时间',
+          key: 'updateTime',
+          render: (h, params) => {
+            if (this.tableData[params.index] == undefined) {
+              return;
+            }
+            return h('div', this.byformatTimestamp(this.tableData[params.index].updateTime));
+          }
+        }, {
+          title: '状态',
+          key: 'activated',
+          render: (h, params) => {
+            return h('div', params.row.activated == true ? '启用' : '禁用');
+          }
+        }, {
+          title: '操作',
+          key: 'action',
+          width: 180,
+          align: 'center',
+          render: (h, params) => {
+            return h('div', [
+              h('Button', {
+                props: {
+                  type: 'text',
+                  size: 'small'
+                },
+                style: {
+                  color: '#4DA1FF'
+                },
+                on: {
+                  click: () => {
+                    this.addOrEdit(params.row);
+                  }
+                }
+              }, '编辑'),
+              h('Button', {
+                props: {
+                  type: 'text',
+                  size: 'small'
+                },
+                style: {
+                  color: '#4DA1FF'
+                },
+                on: {
+                  click: () => {
+                    this.disableOrg(params.row);
+                  }
+                }
+              }, params.row.activated ? '禁用' : '启用'),
+              h('Button', {
+                props: {
+                  type: 'text',
+                  size: 'small'
+                },
+                style: {
+                  color: '#4DA1FF'
+                },
+                on: {
+                  click: () => {
+                    this.deleOrg(params.row);
+                  }
+                }
+              }, '删除')
+            ]);
+          }
+        }],
+        tableData: [],
+        formValidate: {
+          id:'',
+          province:[],
+          city: '',
+          orgName: '',
+          status: '',
+          orgDesc: ''
+        },
+        ruleValidate: {
+          //province: [{required:true, message: '地区不能为空', trigger: 'loadData' }],
+          orgName: [{ required:true, message: '机构名称不能为空', trigger: 'blur' }],
+          status: [{ required:true, message: '请选择状态',trigger: 'change'}],
+        },
+        CascaderData: []
+      }
+    },
+    methods: {
+      changePage(val) {
+        this.page.index = val;
+        this.restPatients();
+      },
+      queryResult(){
+        this.restPatients();
+      },
+      //更新路由，便于回退状态
+      restPatients: function () {
+        this.$router.push({
+          name: 'organization',
+          query: Object.assign({}, this.query, this.page, {t: new Date().getTime()})
+        });
+      },
+      fetchData() {
+          let city='';
+          let province='';
+          if(this.provinceCityList.length>0){
+            province=this.provinceCityList[0];
+            city=this.provinceCityList[1];
+          }
+        this.$http.get("org/page", {
+          params: {
+            size: this.page.size,
+            page: this.page.index,
+            province:province,
+            city:city,
+          }
+        }).then((result) => {
+          if (result.status == "200") {
+            if (result.data.status == "OK") {
+              this.page.total = result.data.totalElements;
+              this.tableData = result.data.list;
+            } else {
+              this.$Message.error(result.data.message);
+            }
+          } else {
+            console.log("搜索无数据")
+          }
+        }).catch((error) => {
+          this.$Message.error("出现error" + error);
+        });
+      },
+      handleSubmit(name) {
+        this.$refs[name].validate((valid) => {
+          if (valid&&this.validProvince()) {
+              let provinceName='';
+              let cityName='';
+              this.CascaderData.forEach(x=>{
+                 if(x.id==this.formValidate.province[0]){
+                          provinceName=x.name;
+                      x.children.forEach(it=>{
+                          if(it.id==this.formValidate.province[1]){
+                            cityName=it.name;
+                          }
+                      })
+                 }
+              });
+              this.$http.post("org/saveOrUpdate?name="+this.formValidate.orgName+"&districtId="+this.formValidate.province[1]
+                  +"&id="+this.formValidate.id
+                  +"&parentId="+this.formValidate.province[0].substr(0,2)+'0000'
+                  +"&description="+this.formValidate.orgDesc+"&activated="+this.formValidate.status
+              +"&provinceName="+provinceName
+              +"&cityName="+cityName).then((result) => {
+                if (result.status == "200") {
+                  if (result.data.status == "OK") {
+                    this.$Message.success(result.data.message);
+                    this.showModal = false;
+                    this.restPatients();
+                  } else {
+                    this.$Message.error(result.data.message);
+                  }
+                }
+              }).catch((error) => {
+                this.$Message.error("出现error" + error);
+              });
+
+          } else {
+            this.loading = false;
+            this.$nextTick(() => {
+              this.loading = true;
+            });
+          }
+        })
+      },
+      validProvince(){
+        if(this.formValidate.province.length>0){
+          return true;
+        }else{
+          this.$Message.error('地区不能为空!');
+          return false;
+        }
+      },
+      cancel(name) {
+        this.loadDistrict(0);
+      },
+      addOrEdit(obj) {
+        this.$refs['formValidate'].resetFields();
+        this.formValidate.province=[];
+        this.formValidate.id='';
+        if (obj.id) {
+          this.formValidate.id=obj.id;
+          this.formValidate.orgName=obj.name;
+          this.formValidate.status=(obj.activated?1:0)+'';
+          this.formValidate.orgDesc=obj.description;
+          var provinceId=obj.districtId.substr(0,2)+'0000';
+          this.formValidate.province=[provinceId,obj.districtId];//,obj.districtId
+        }
+        this.showModal = true;
+      },
+      clearQuery() {
+        this.provinceCityList = []
+      },
+      loadDistrict(parentId){
+        this.$http.get("district/list?parentId="+parentId).then((result) => {
+          if (result.status == "200") {
+            if (result.data.status == "OK") {
+                this.CascaderData=result.data.data;
+                this.CascaderData.forEach(x=>{
+                    x.value=x.id,
+                    x.label=x.name,
+                    x.children=[],
+                    x.loading=false
+                });
+            } else {
+              this.$Message.error(result.data.message);
+            }
+          }
+        }).catch((error) => {
+          this.$Message.error("出现error" + error);
+        });
+    },
+    loadData(item,callback) {
+      item.loading = true;
+        this.$http.get("district/list?parentId="+item.value).then((result) => {
+          if (result.status == "200") {
+            if (result.data.status == "OK") {
+              item.children=result.data.data;
+              item.children.forEach(x=>{
+                  x.value=x.id,
+                  x.label=x.name
+              });
+              item.loading = false;
+              callback();
+            } else {
+              this.$Message.error(result.data.message);
+            }
+          }
+        }).catch((error) => {
+          this.$Message.error("出现error" + error);
+        });
+    },
+    disableOrg(obj){
+      this.$Modal.confirm({
+        title: obj.activated ? '禁用' : '启用',
+        content: '<p>确认执行该操作吗？</p>',
+        okText: '确定',
+        cancelText: '取消',
+        onOk: () => {
+          this.$http.post("org/updateStatus?id=" + obj.id + "&activated=" +(obj.activated?false:true)+'').then((result) => {
+            if (result.status == "200") {
+              if (result.data.status == "OK") {
+                this.$Message.success(result.data.message);
+                this.restPatients();
+              } else {
+                this.$Message.error(result.data.message);
+              }
+            }
+          }).catch((error) => {
+            this.$Message.error("出现error" + error);
+          });
+        },
+      });
+    },
+    deleOrg(obj){
+      this.$Modal.confirm({
+        title: '删除',
+        content: '<p>确认执行该操作吗？</p>',
+        okText: '确定',
+        cancelText: '取消',
+        onOk: () => {
+          this.$http.post("org/del?id="+obj.id).then((result) => {
+            if (result.status == "200") {
+              if (result.data.status == "OK") {
+                this.$Message.success(result.data.message);
+                this.restPatients();
+              } else {
+                this.$Message.error(result.data.message);
+              }
+            }
+          }).catch((error) => {
+            this.$Message.error("出现error" + error);
+          });
+        },
+      });
+    }
+  }
+  ,
+  filters: {
+  }
+  ,
+  created: function () {
+    bus.$emit('leftHeight', 21);
+    bus.$emit('leftMenu', 'setting', 'resource');
+    this.restPatients();
+    this.loadDistrict(0);
+  }
+  ,
+  components: {
+  }
+  ,
+  watch: {
+    '$route'
+  :
+    'fetchData'
+  }
+  }
+</script>

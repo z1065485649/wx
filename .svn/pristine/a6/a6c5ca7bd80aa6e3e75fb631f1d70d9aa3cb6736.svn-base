@@ -1,0 +1,30 @@
+<!-- 主页 -->
+<style lang="less" scoped>
+    .content {
+
+    }
+</style>
+
+<template>
+    <div class="content">
+      <h2>主页</h2>
+    </div>
+</template>
+<script>
+    export default{
+        name: 'home',
+        props: {},
+        data: function () {
+            return {}
+        },
+        created: function () {
+
+        },
+        methods: {}
+        ,
+        computed: {},
+        components: {}
+        ,
+        watch: {}
+    }
+</script>

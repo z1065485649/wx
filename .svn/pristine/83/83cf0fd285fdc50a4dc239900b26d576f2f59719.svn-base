@@ -1,0 +1,401 @@
+<style scoped lang="less">
+  .status {
+    margin-left: 20px;
+    margin-right: 20px;
+  }
+</style>
+
+<template>
+  <div class="content">
+    <Row style="margin-bottom: 20px;">
+      <Col span="21">
+      <Input v-model="query.key"  :maxlength="20" placeholder="登陆账户/姓名" style="width: 200px"></Input>
+      <!--<Input v-model="query.name" :maxlength="20" placeholder="姓名" style="width: 200px"></Input>-->
+      <span class="status">状态：<i-switch v-model="query.activated" @on-change="changeSwitch"></i-switch></span>
+      <Button type="primary" @click="Query">查询</Button>
+      <Button type="primary" @click="clearQuery">清空</Button>
+      </Col>
+      <Col span="3" align="right">
+      <Button type="primary" @click="editModel">创建用户</Button>
+      </Col>
+    </Row>
+    <Row>
+      <Col>
+      <Table border :data="tableData" :columns="tableColumns"></Table>
+      <div style="margin: 10px;overflow: hidden">
+        <div style="float: right;">
+          <Page :total="page.total" :page-size="page.size" :current="page.index" @on-change="changePage"></Page>
+        </div>
+      </div>
+      </Col>
+    </Row>
+    <Modal v-model="showUserModal" :loading="loading"  :title="formValidate.id==''?'新增用户':'编辑用户'" @on-ok="handleSubmit('formValidate')"
+           @on-cancel="cancel">
+      <Form ref="formValidate" :model="formValidate" :rules="ruleValidate" :label-width="80">
+        <FormItem label="手机号码" prop="phone">
+          <Input :maxlength="11" v-model="formValidate.phone" placeholder="请输入手机号码" :disabled="formValidate.id==''?false:true"></Input>
+        </FormItem>
+        <FormItem label="性别" prop="sex">
+          <RadioGroup v-model="formValidate.sex">
+            <Radio label="MAN">男</Radio>
+            <Radio label="LADY">女</Radio>
+          </RadioGroup>
+        </FormItem>
+        <FormItem label="姓名" prop="name">
+          <Input v-model="formValidate.name" placeholder="请输入姓名"></Input>
+        </FormItem>
+        <FormItem label="生日" prop="date">
+          <DatePicker type="date" :options="dateOptions" placeholder="选择日期" v-model="formValidate.date"></DatePicker>
+        </FormItem>
+        <FormItem label="状态" prop="status">
+          <Select v-model="formValidate.status">
+            <Option value="true">启用</Option>
+            <Option value="false">禁用</Option>
+          </Select>
+        </FormItem>
+        <FormItem label="上传头像" prop="pic">
+          <Upload :MaxNum='1' :defaultList='fileList' @updateSuccess='updateSuccess' :maxSize="1024" uploadParamType="useravatar"
+                  @removeSuccess='removeSuccess'></Upload>
+        </FormItem>
+        <FormItem label="角色" prop="role">
+          <Select v-model="formValidate.role">
+            <Option v-for="x in roleList" :value="x.id"  :key="x">{{x.name}}</Option>
+          </Select>
+        </FormItem>
+        <FormItem label="组织机构" prop="org">
+         <!-- <Select v-model="formValidate.org">
+            <Option value="北京清华长庚医院">北京清华长庚医院</Option>
+            <Option value="深圳百诺国际整合医疗">深圳百诺国际整合医疗</Option>
+          </Select>-->
+          <Select
+            v-model="formValidate.org"
+            multiple filterable remote
+            :remote-method="remoteMethod"
+            :loading="loading">
+            <Option v-for="(option,index) in orgList" :value="option.value" :key="index"></Option>
+          </Select>
+        </FormItem>
+      </Form>
+
+    </Modal>
+  </div>
+</template>
+
+<script>
+  import bus from '@/libs/bus'
+  import  Upload from '@/components/Upload'
+  export default {
+    data() {
+      return {
+        loading: true,
+        showUserModal: false,
+        activated: true,
+        query: {
+          key:this.$route.query.key ?this.$route.query.key:'',
+          activated:this.$route.query.activated ?this.$route.query.activated:true,
+        },
+        page: { //分页参数
+          size: this.$route.query.size ? parseInt(this.$route.query.size) : 10,
+          index: this.$route.query.index ? parseInt(this.$route.query.index) : 1,
+          total: this.$route.query.total ? parseInt(this.$route.query.total) : 0,
+        },
+        tableColumns: [{
+          title: '序号',
+          type: 'index',
+        }, {
+          title: '登陆账号',
+          key: 'phone'
+        }, {
+          title: '姓名',
+          key: 'name'
+        }, {
+          title: '创建时间',
+          key: 'createTime',
+          render: (h, params) => {
+            if (this.tableData[params.index] == undefined) {
+              return;
+            }
+            return h('div', this.byformatTimestamp(this.tableData[params.index].createTime));
+          }
+        }, {
+          title: '状态',
+          key: 'activated',
+          render: (h,params) => {
+            return h('div',params.row.activated==true?'启用':'禁用');
+          }
+        }, {
+          title: '角色',
+          key: 'roleName'
+        }, {
+          title: '操作',
+          key: 'action',
+          width: 200,
+          align: 'center',
+          render: (h, params) => {
+            return h('div', [
+              h('Button', {
+                props: {
+                  type: 'text',
+                  size: 'small'
+                },
+                style: {
+                  color: '#4DA1FF'
+                },
+                on: {
+                  click: () => {
+                    this.editModel(params.row.id);
+                  }
+                }
+              }, '编辑'),
+              h('Button', {
+                props: {
+                  type: 'text',
+                  size: 'small'
+                },
+                style: {
+                  color: '#4DA1FF'
+                },
+                on: {
+                  click: () => {
+                      this.resetPassword(params.row);
+                  }
+                }
+              }, '重置密码'),
+              h('Button', {
+                props: {
+                  type: 'text',
+                  size: 'small'
+                },
+                style: {
+                  color: '#4DA1FF'
+                },
+                on: {
+                  click: () => {
+                      this.disableUser(params.row);
+                  }
+                }
+              },params.row.activated?'禁用':'启用'),
+            ]);
+          }
+        }],
+        tableData: [],
+        roleList:[],
+        orgList:[],
+        formValidate: {
+          id:'',
+          phone: '',
+          sex: 'MAN',
+          name: '',
+          date: '',
+          status: 'true',
+          pic: '',
+          role: '',
+          org: ''
+        },
+        ruleValidate: {
+          phone: [{required: true, message: '手机号不能为空', trigger: 'blur'}],
+          name: [{required: true, message: '姓名不能为空', trigger: 'blur'}],
+          pic: [],
+          role: [{required: true, message: '请选择角色', trigger: 'change'}],
+          org: []
+        },
+        fileList: [],
+        dateOptions: {
+          disabledDate (date) {
+            return date && date.valueOf() > Date.now();
+          }
+        }
+      }
+    },
+    methods: {
+      remoteMethod(query){
+        if (query !== '') {
+          this.loading = true;
+            this.$http.get("org/page", {
+              params: {
+                size: 1,
+                page:50,
+              }
+            }).then((result) => {
+              if (result.status == "200") {
+                if (result.data.status == "OK") {
+                  this.orgList = result.data.list;
+                  this.loading= false;
+                }
+              }
+            }).catch((error) => {
+              this.$Message.error("出现error" + error);
+            });
+
+          /*  setTimeout(() => {
+              this.loading2 = false;
+              const list = this.list.map(item => {
+                return {
+                  value: item,
+                  label: item
+                };
+              });
+            }, 200);*/
+        } else {
+          this.orgList = [];
+        }
+      },
+      updateSuccess(file) {
+        this.formValidate.pic = file.url;
+        $(".container .ivu-upload").parent().parent().find(".ivu-form-item-error-tip").hide();
+      },
+      removeSuccess(file) {
+        this.formValidate.pic = '';
+        $(".container .ivu-upload").parent().parent().find(".ivu-form-item-error-tip").show();
+      },
+      changePage(val) {
+        this.page.index = val;
+        this.restPatients();
+      },
+      Query(){
+          this.restPatients();
+      },
+      //更新路由，便于回退状态
+      restPatients: function () {
+        this.$router.push({
+          name: 'user',
+          query: Object.assign({}, this.query, this.page, {t: new Date().getTime()})
+        });
+      },
+      resetPassword(obj){
+        this.$Modal.confirm({
+          title: '重置密码',
+          content: '<p>确认执行该操作吗？</p>',
+          okText: '确定',
+          cancelText: '取消',
+          onOk: () => {
+              this.$Message.info('not api');
+                /*this.$http.get("user/listData", {
+                  params: { }
+                }).then((result) => {
+                  if (result.status == "200") {
+                    if (result.data.status == "OK") {
+                      this.$Message.success(result.data.message);
+                    } else {
+                      this.$Message.error(result.data.message);
+                    }
+                  }
+                }).catch((error) => {
+                  this.$Message.error("出现error" + error);
+                });*/
+          },
+        });
+       },
+      disableUser(obj){
+        this.$Modal.confirm({
+          title: obj.activated?'禁用':'启用',
+          content: '<p>确认执行该操作吗？</p>',
+          okText: '确定',
+          cancelText: '取消',
+          onOk: () => {
+            this.$Message.info('not api');
+            /*this.$http.get("user/listData", {
+             params: { }
+             }).then((result) => {
+             if (result.status == "200") {
+             if (result.data.status == "OK") {
+             this.$Message.success(result.data.message);
+             } else {
+             this.$Message.error(result.data.message);
+             }
+             }
+             }).catch((error) => {
+             this.$Message.error("出现error" + error);
+             });*/
+          },
+        });
+      },
+      getRoleList(){
+        this.$http.get("role/listData", {
+          params: {}
+        }).then((result) => {
+          if (result.status == "200") {
+            if (result.data.status == "OK") {
+                result.data.list.forEach(x=>{
+                 if(x.activated){
+                   this.roleList.push(x);
+                 }
+              });
+            }
+          }
+        }).catch((error) => {
+          this.$Message.error("出现error" + error);
+        });
+      },
+      fetchData() {
+        this.$http.get("user/listData", {
+          params: {
+            size: this.page.size,
+            page: this.page.index,
+            searchKey:this.query.key,
+            activated:this.query.activated,
+            onlyIncludeActivated:true
+          }
+        }).then((result) => {
+          if (result.status == "200") {
+            if (result.data.status == "OK") {
+              this.page.total = result.data.totalElements;
+              this.tableData = result.data.list;
+            } else {
+              this.$Message.error(result.data.message);
+            }
+          }
+        }).catch((error) => {
+          this.$Message.error("出现error" + error);
+        });
+      },
+      clearQuery() {
+        this.query.key = '';
+        this.$route.query.key='';
+      },
+      changeSwitch(status) {
+          this.query.activated=status;
+          this.restPatients();
+          this.$Message.info('开关状态：' + status);
+      },
+      handleSubmit(name) {
+        this.$refs[name].validate((valid) => {
+          if (valid) {
+            this.showUserModal = false;
+            this.$Message.success('提交成功!');
+          } else {
+            this.loading = false;
+            this.$nextTick(() => {
+              this.loading = true;
+            });
+            this.$Message.error('表单验证失败!');
+          }
+        })
+      },
+      cancel(name) {
+
+      },
+      editModel(id) {
+        this.getRoleList();
+        this.$refs['formValidate'].resetFields();
+        if (id) {
+
+        }
+        this.showUserModal = true;
+      }
+    },
+    filters: {},
+    created: function () {
+      bus.$emit('leftHeight', 21);
+      bus.$emit('leftMenu', 'manage', 3);
+      this.restPatients();
+    },
+    components: {
+      Upload
+    },
+    watch: {
+      // 如果路由有变化，会再次执行该方法
+      '$route': 'fetchData'
+    }
+  }
+</script>

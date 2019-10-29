@@ -1,0 +1,453 @@
+<style lang="less">
+	.ivu-tree-arrow {
+		position: absolute;
+	}
+	
+	.ivu-tree .ivu-tree-children {
+		padding-left: 18px;
+	}
+	
+	.ivu-tree .ivu-tree-children li {
+		position: relative;
+	}
+	
+	.ivu-tree .ivu-tree-arrow {
+		left: -10px;
+		top: 0;
+	}
+</style>
+
+<template>
+	<div class="content">
+		<Row style="margin-bottom: 20px;">
+			<Col span="21">
+			<Input v-model="query.key" :maxlength="20" placeholder="角色名称" style="width: 346px"></Input>
+			<Button type="primary" @click="fetchData">查询</Button>
+			<Button type="primary" @click="clearQuery">清空</Button>
+			</Col>
+			<Col span="3" align="right">
+			<Button type="primary" @click="newRole">创建角色</Button>
+			</Col>
+		</Row>
+		<Row>
+			<Col>
+			<Table border :data="tableData" :columns="tableColumns"></Table>
+			<div style="margin: 10px;overflow: hidden">
+				<div style="float: right;">
+					<Page :page-size-opts="[10,20,50,100]" :total="page.total" :page-size="page.size" :current="page.index" @on-change="changePage"></Page>
+				</div>
+			</div>
+			</Col>
+		</Row>
+		<Modal v-model="showModal1" :loading="loading1" title="权限编辑" @on-ok="handleSubmit1('formValidate1')" @on-cancel="cancel1">
+			<Form ref="formValidate1" :model="formValidate1" :rules="ruleValidate1" :label-width="80">
+				<FormItem label="角色名称" prop="name">
+					<Input v-model="formValidate1.name" placeholder="请输入角色名称"></Input>
+				</FormItem>
+				<FormItem label="状态" prop="activated">
+					<Select v-model="formValidate1.activated">
+						<Option value="true">启用</Option>
+						<Option value="false">禁用</Option>
+					</Select>
+				</FormItem>
+				<FormItem label="备注" prop="description">
+					<Input v-model="formValidate1.description" type="textarea" :autosize="{minRows: 2,maxRows: 5}" placeholder="请输入..."></Input>
+				</FormItem>
+			</Form>
+		</Modal>
+		<Modal v-model="showModal2" title="资源设置" @on-ok="handleSubmit2" @on-cancel="cancel2">
+			<Input v-model="treeSearchInput" @on-change="treeSearch" placeholder="搜索" style="width: 300px"></Input>
+			<i-switch style="margin: 0 10px;" v-model="switch1"><span slot="open">开</span>
+				<span slot="close">关</span></i-switch>
+			<span>操作包含下级</span>
+			<Tree :data="treeData" ref="tree" :multiple="true" @on-select-change="selectChange"></Tree>
+		</Modal>
+	</div>
+</template>
+
+<script>
+	import bus from '@/libs/bus'
+	export default {
+		data() {
+				return {
+					oldSelectTree: [],
+					switch1: false,
+					roleId: '',
+					createBy: '',
+					userId: '',
+					loading1: true,
+					showModal1: false,
+					showModal2: false,
+					treeSearchInput: '',
+					formValidate1: {
+						name: '',
+						activated: '',
+						description: ''
+					},
+					ruleValidate1: {
+						name: [{
+							required: true,
+							message: '请填写角色名称',
+							trigger: 'blur'
+						}],
+						activated: [{
+							required: true,
+							message: '请选择状态',
+							trigger: 'blur'
+						}],
+						description: []
+					},
+					treeData: [],
+					query: {
+						key: ''
+					},
+					page: { //分页参数
+						size: 10,
+						index: 1,
+						total: 0,
+					},
+					tableColumns: [{
+						title: '序号',
+						type: 'index'
+					}, {
+						title: '角色名称',
+						key: 'name'
+					}, {
+						title: '更新时间',
+						key: 'lastUpdateTime',
+						render: (h, params) => {
+							return h('span', {}, this.byformatTimestamp(params.row.lastUpdateTime))
+						}
+					}, {
+						title: '状态',
+						key: 'activated',
+						render: (h, params) => {
+							return h('span', {}, this.ifActivated(params.row.activated))
+						}
+					}, {
+						title: '操作',
+						key: 'action',
+						width: 180,
+						align: 'center',
+						render: (h, params) => {
+							return h('div', [
+								h('Button', {
+									props: {
+										type: 'text',
+										size: 'small'
+									},
+									style: {
+										color: '#4DA1FF'
+									},
+									on: {
+										click: () => {
+											this.editModel1(params.row);
+										}
+									}
+								}, '编辑'),
+								h('Button', {
+									props: {
+										type: 'text',
+										size: 'small'
+									},
+									style: {
+										color: '#4DA1FF'
+									},
+									on: {
+										click: () => {
+											this.toggleActivated(params.row)
+										}
+									}
+								}, this.ifActivated(!params.row.activated)),
+								h('Button', {
+									props: {
+										type: 'text',
+										size: 'small'
+									},
+									style: {
+										color: '#4DA1FF'
+									},
+									on: {
+										click: () => {
+											this.delRole(params.row.id);
+										}
+									}
+								}, '删除'),
+								h('Button', {
+									props: {
+										type: 'text',
+										size: 'small'
+									},
+									style: {
+										color: '#4DA1FF'
+									},
+									on: {
+										click: () => {
+											this.editModel2(params.row.id);
+										}
+									}
+								}, '资源设置')
+							]);
+						}
+					}],
+					tableData: []
+				}
+			},
+			methods: {
+				changePage(val) {
+					this.page.index = val;
+					this.fetchData();
+				},
+				fetchData() {
+					this.$http.get("role/listData", {
+						params: {
+							size: this.page.size,
+							page: this.page.index,
+							name: this.query.key
+						}
+					}).then((result) => {
+						if(result.status == "200") {
+							if(result.data.status == "OK") {
+								this.page.total = result.data.totalElements;
+								this.tableData = result.data.list;
+							} else {
+								this.$Message.error(result.data.message);
+							}
+						} else {
+							console.log("搜索无数据")
+						}
+					}).catch((error) => {
+						this.$Message.error("出现error" + error);
+					});
+				},
+				handleSubmit1(name) {
+					this.$refs[name].validate((valid) => {
+						if(valid) {
+							this.$http.post('role/addOrEdit?id=' + this.roleId +
+								'&activated=' + this.formValidate1.activated +
+								'&name=' + this.formValidate1.name +
+								'&description=' + this.formValidate1.description +
+								'&createBy=' + this.createBy).then((result) => {
+								console.log(result);
+								if(result.data.status == 'OK') {
+									this.showModal1 = false;
+									this.$Message.success('提交成功!');
+									this.fetchData();
+								} else {
+									this.$Message.error("出现error" + result.data.message);
+								}
+							}).catch((error) => {
+								this.$Message.error("出现error" + error);
+							});
+						} else {
+							this.loading1 = false;
+							this.$nextTick(() => {
+								this.loading1 = true;
+							});
+							this.$Message.error('表单验证失败!');
+						}
+					})
+				},
+				handleSubmit2() {
+					let selectNodes = this.$refs.tree.getSelectedNodes();
+					let selectNodesStr = '';
+					for(let i = 0; i < selectNodes.length; i++) {
+						selectNodesStr += selectNodes[i].id + ","
+					}
+					this.$http.post('resource/resource_role_save?roleId=' + this.roleId, {
+						checkedIds: selectNodesStr
+					}).then((result) => {
+						if(result.data.status == 'OK') {
+							this.$Message.success('保存成功!');
+						} else {
+							this.$Message.error("出现error" + result.data.message);
+						}
+					}).catch((error) => {
+						this.$Message.error("出现error" + error);
+					});
+				},
+				toggleActivated(obj) {
+					this.$http.post('role/updateStatus?id=' + obj.id +
+						'&activated=' + !obj.activated).then((result) => {
+						if(result.data.status == 'OK') {
+							this.fetchData();
+						} else {
+							this.$Message.error("出现error" + result.data.message);
+						}
+					}).catch((error) => {
+						this.$Message.error("出现error" + error);
+					});
+				},
+				newRole() {
+					this.$refs['formValidate1'].resetFields();
+					this.roleId = '';
+					this.showModal1 = true;
+				},
+				cancel1(name) {},
+				cancel2(name) {},
+				editModel1(obj) {
+					this.$refs['formValidate1'].resetFields();
+					this.roleId = obj.id;
+					this.createBy = obj.createBy;
+					this.$set(this.formValidate1, 'name', obj.name);
+					this.$set(this.formValidate1, 'activated', obj.activated + '');
+					this.$set(this.formValidate1, 'description', obj.description);
+					this.showModal1 = true;
+				},
+				editModel2(id) {
+					this.$http.post('resource/resourceTreeData?roleId=' + id).then((result) => {
+						if(result.data.status == 'OK') {
+							this.treeData = [];
+							this.treeSearchInput = '';
+							this.editTreeData(result.data.data[0], this.treeData);
+							this.roleId = id;
+							this.$nextTick(() => {
+								this.oldSelectTree = this.$refs.tree.getSelectedNodes();
+							});
+							this.showModal2 = true;
+						} else {
+							this.$Message.error("出现error" + result.data.message);
+						}
+					}).catch((error) => {
+						this.$Message.error("出现error" + error);
+					});
+				},
+				ableRole() {
+
+				},
+				disableRole() {
+
+				},
+				editTreeData(data, newData) {
+					let dataJson = {
+						"title": data.text,
+						"id": data.id,
+						"selected": data.state ? true : false,
+						"expand": false
+					};
+					if(data.nodes) {
+						dataJson.children = [];
+						for(let i = 0; i < data.nodes.length; i++) {
+							this.editTreeData(data.nodes[i], dataJson.children);
+						}
+					}
+					newData.push(dataJson);
+				},
+				delRole(id) {
+					this.$Modal.confirm({
+						title: '删除角色',
+						content: '<p>确认删除角色？</p>',
+						onOk: () => {
+							this.$http.post('role/del?id=' + id).then((result) => {
+								if(result.data.status == 'OK') {
+									this.$Message.info('角色已删除');
+									this.fetchData();
+								} else {
+									this.$Message.error("出现error" + result.data.message);
+								}
+							}).catch((error) => {
+								this.$Message.error("出现error" + error);
+							});
+						},
+						onCancel: () => {}
+					});
+				},
+				treeSearch() {
+					let reg = new RegExp(this.treeSearchInput);
+					(this.treeSearchInput.replace(/(^\s*)|(\s*$)/g, "") == '') && (reg = new RegExp('^$'))
+					this.findTree(this.treeData[0], reg);
+					console.log(this.treeData);
+				},
+				findTree(data, reg) {
+					let oldtitle = '';
+					let expand = false;
+					if(data.title.match(/<span style="color: red">(.*)<\/span>/)) {
+						oldtitle = data.title.match(/<span style="color: red">(.*)<\/span>/)[1]
+					} else {
+						oldtitle = data.title
+					}
+					if(data.children) {
+						for(let i = 0; i < data.children.length; i++) {
+							this.findTree(data.children[i], reg) && (expand = true);
+						}
+					}
+					expand && (data.expand = expand);
+					if(oldtitle.match(reg)) {
+						data.title = '<span style="color: red">' + oldtitle + '</span>';
+					} else {
+						data.title = oldtitle;
+					}
+					if(oldtitle.match(reg) || expand) {
+						return true
+					} else {
+						return false
+					}
+				},
+				selectChange(e) {
+					let selectNode = this.findChangeSelect(this.oldSelectTree, e);
+					this.switch1 && this.selectInclude(this.treeData[0],selectNode.id);
+					this.oldSelectTree = this.$refs.tree.getSelectedNodes();
+				},
+				selectInclude (data,id,selected){
+					let selected2 = false;
+					(typeof selected !== 'undefined') && (data.selected = selected);
+					if(data.id == id){
+						selected = data.selected;
+						if(data.selected == true){
+							selected2 = true
+						}
+					}
+					if(data.children) {
+						for(let i = 0; i < data.children.length; i++) {
+							this.selectInclude(data.children[i], id, selected) && (selected2 = true);
+						}
+					}
+					if(selected2){
+						data.selected = true;
+						return true
+					}
+					return false
+				},
+				findChangeSelect(oldData, newData) {
+					if(oldData.length == 0){
+						return newData[0]
+					}
+					if(oldData.length < newData.length) {
+						for(let i = 0; i < oldData.length; i++) {
+							if(oldData[i].id != newData[i].id) {
+								return newData[i]
+							}
+						}
+						return newData[newData.length]
+					} else {
+						for(let i = 0; i < newData.length; i++) {
+							if(oldData[i].id != newData[i].id) {
+								return oldData[i]
+							}
+						}
+						return oldData[oldData.length]
+					}
+				},
+				clearQuery() {
+					this.query.key = '';
+					this.fetchData();
+				},
+				ifActivated(bool) {
+					if(bool) {
+						return '启用';
+					} else {
+						return '禁用';
+					}
+				}
+			},
+			filters: {},
+			created: function() {
+				bus.$emit('leftHeight', 21);
+				bus.$emit('leftMenu', 'manage', 2);
+				this.userId = eval('(' + localStorage.getItem("userDoctPc") + ')').id;
+				this.fetchData();
+			},
+			components: {},
+			watch: {}
+	}
+</script>

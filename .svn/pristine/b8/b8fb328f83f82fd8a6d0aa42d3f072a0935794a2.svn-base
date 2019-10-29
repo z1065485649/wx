@@ -1,0 +1,64 @@
+<style lang="less" scoped>
+    .breadcrumb {
+        padding: 20px;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+        > span:last-child {
+            font-weight: normal;
+        }
+    }
+
+    .go-back {
+        float: right;
+    }
+
+</style>
+
+<template>
+    <div>
+        <Breadcrumb class="breadcrumb">
+            <Breadcrumb-item v-for="it in breadcrumbs" :key="it.path" :href="it.path||'/'">
+                {{it.meta.title}}
+            </Breadcrumb-item>
+            <div class="go-back">
+                <Tooltip content="快捷键：ALT + ←--">
+                    <Button type="dashed" @click="pageGoBack">返回上一页</Button>
+                </Tooltip>
+            </div>
+        </Breadcrumb>
+    </div>
+</template>
+
+<script>
+
+    export default {
+        name: 'Toolbar',
+        data: function () {
+            return {
+                breadcrumbs: []
+            }
+        },
+        methods: {
+            resetBreadcrumbs() {
+                let matches = this.$route.matched;
+                if (matches && matches.length) {
+                    this.breadcrumbs = matches.filter(it => it.meta && it.meta.title && it.meta.breadcrumb);
+                }
+            },
+            pageGoBack() {
+                this.$router.go(-1);
+            },
+        },
+        created() {
+            this.resetBreadcrumbs();
+        },
+        watch: {
+            //路由变更时，按照当前路由重置当前面包屑
+            '$route': function () {
+                //console.log(this.$route.matched)
+                this.resetBreadcrumbs();
+            }
+        }
+    }
+
+</script>
