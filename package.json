@@ -13,7 +13,7 @@
     "test": "npm run unit && npm run e2e"
   },
   "dependencies": {
-    "axios": "^0.16.2",
+    "axios": "^0.21.1",
     "babel-polyfill": "^6.23.0",
     "iview": "^2.0.0-rc.16",
     "qs": "^6.5.1",
